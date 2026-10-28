@@ -7,6 +7,8 @@ this projects aims to create at least some driver so maybe in future we can get 
 this project has been part built by AI.
 
 how to install: 
-`git clone https://github.com/alexandercsampai/OV9234.git`
-`cd OV9234`
+`git clone https://github.com/alexandercsampai/OV9234.git`  
+
+`cd OV9234`  
+
 `chmod +x install.sh && ./install.sh`
