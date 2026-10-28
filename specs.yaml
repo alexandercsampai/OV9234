@@ -1,0 +1,1093 @@
+# ==============================================================================
+# AI-OPTIMIZED DRIVER SPECIFICATION: OMNIVISION OV9234 (B&W / IR) IMAGE SENSOR
+# Datasheet Version: 2.01 (May 2017)[cite: 2]
+# ==============================================================================
+
+sensor_metadata:
+  vendor: "OmniVision Technologies, Inc." #[cite: 2]
+  model: "OV9234" #[cite: 1, 13]
+  shared_architecture_sibling: "OV9734" # Color RGB Bayer variant sharing the same silicon/registers[cite: 3, 13]
+  ordering_part_numbers:
+    - part: "OV09234-H16A" #[cite: 3]
+      type: "Monochrome (B&W / IR), lead-free, 16-pin CSP" #[cite: 3]
+    - part: "OV09234-GA5A" #[cite: 69]
+      type: "Monochrome (B&W / IR) RW/die variant" #[cite: 69]
+  technology: "PureCel CMOS rolling shutter, progressive scan" #[cite: 3]
+  optical_and_physical_specs_metric:
+    pixel_size_um: { width: 1.4, height: 1.4 } #[cite: 3]
+    image_area_um: { width: 1819.58, height: 1033.34 } #[cite: 3, 65]
+    package_dimensions_um:
+      body_x: { min: 2507, typ: 2532, max: 2557 } #[cite: 3, 63]
+      body_y: { min: 1697, typ: 1722, max: 1747 } #[cite: 3, 63]
+      package_height: { min: 680, typ: 740, max: 800 } #[cite: 63]
+      pin_pitch_x: 275 #[cite: 63]
+      pin_pitch_y: 305 #[cite: 63]
+      total_balls: 16 #[cite: 63]
+    array_center_offset_from_package_center_um: { x: -63.0, y: -66.6 } #[cite: 65]
+    first_pixel_readout_coord_um: { x: -972.79, y: 450.07 } #[cite: 65]
+    chief_ray_angle_deg: 32.1 # At 0.925 mm image height (90% field)[cite: 3, 66]
+    sensitivity_mv_per_lux_sec: 585 #[cite: 3]
+    max_snr_db: 36.4 #[cite: 3]
+    dynamic_range_db: 68.4 # Measured at 16x gain[cite: 3]
+    dark_current_e_per_sec: 2 # At 50 deg C junction temperature[cite: 3]
+  thermal_specs_celsius:
+    ambient_storage: { min: -40, max: 125 } #[cite: 59]
+    operating_junction: { min: -30, max: 85 } #[cite: 3, 59]
+    stable_image_junction: { min: 0, max: 50 } #[cite: 3, 59]
+    peak_solder_reflow: 245 # Max 30 seconds duration[cite: 59, 64]
+
+# ==============================================================================
+# 1. HARDWARE INTERFACES, PINOUT & ELECTRICAL SPECIFICATIONS
+# ==============================================================================
+hardware_interface:
+  pinout_16_csp: #[cite: 11, 12]
+    A2: { name: "VN", type: "reference", description: "Internal analog reference (connect 1 uF capacitor to AGND)" } #[cite: 11, 15]
+    A4: { name: "SID", type: "input", description: "SCCB slave address selection (Low=0x6C, High=0x20)" } #[cite: 11, 15]
+    A6: { name: "SDA", type: "io", description: "SCCB serial data" } #[cite: 11]
+    A8: { name: "DOGND", type: "ground", description: "Ground for digital/IO circuit" } #[cite: 11]
+    B1: { name: "AGND", type: "ground", description: "Ground for analog circuit (separate from DOGND inside module)" } #[cite: 11, 15]
+    B3: { name: "XSHUTDN", type: "input", description: "Hardware reset and power down (active low, internal pull-down resistor)" } #[cite: 11]
+    B5: { name: "FSIN/VSYNC", type: "io", description: "Frame sync input or VSYNC output (leave floating if unused)" } #[cite: 11, 15]
+    B7: { name: "SCL", type: "input", description: "SCCB serial input clock" } #[cite: 11]
+    C2: { name: "AVDD", type: "power", description: "Analog power supply" } #[cite: 11]
+    C4: { name: "MDN0", type: "io", description: "MIPI TX data lane 0 negative output" } #[cite: 11]
+    C6: { name: "MCN", type: "io", description: "MIPI TX clock lane negative output" } #[cite: 11]
+    C8: { name: "DVDD", type: "power", description: "Digital core power supply (must be provided externally)" } #[cite: 11, 15]
+    D1: { name: "XVCLK", type: "input", description: "System master input clock (6 to 27 MHz)" } #[cite: 3, 11]
+    D3: { name: "MDP0", type: "io", description: "MIPI TX data lane 0 positive output" } #[cite: 11]
+    D5: { name: "MCP", type: "io", description: "MIPI TX clock lane positive output" } #[cite: 11]
+    D7: { name: "DOVDD", type: "power", description: "Digital I/O power supply" } #[cite: 11]
+
+  power_supplies: #[cite: 3, 60]
+    AVDD:
+      voltage_v: { min: 2.6, typ: 2.8, max: 3.0 } #[cite: 3, 60]
+      active_current_ma: { typ: 18.5, max: 35.0 } #[cite: 60]
+    DVDD:
+      voltage_v: { min: 1.14, typ: 1.2, max: 1.26 } # 1.2V +/- 5%[cite: 3, 60]
+      active_current_ma: { typ: 12.0, max: 16.0 } #[cite: 60]
+    DOVDD:
+      voltage_v: { min: 1.7, typ: 1.8, max: 1.9 } #[cite: 3, 60]
+      active_current_ma: { typ: 1.5, max: 2.2 } #[cite: 60]
+    power_consumption:
+      active_mw: 69.0 #[cite: 3]
+      standby_xshutdn_uw: 0.9 #[cite: 3]
+      standby_current_sccb_ua: { typ: 60.0, max: 1500.0 } # Measured with external clock off and Sleep_On register sequence applied[cite: 60]
+      standby_current_xshutdn_ua: { typ: 0.5, max: 10.0 } #[cite: 60]
+    digital_io_levels_v: # At DOVDD = 1.8V[cite: 60]
+      vil_max: 0.54 #[cite: 60]
+      vih_min: 1.26 #[cite: 60]
+      vol_max: 0.18 #[cite: 60]
+      voh_min: 1.62 #[cite: 60]
+      sccb_vil: { min: -0.5, typ: 0.0, max: 0.54 } #[cite: 60]
+      sccb_vih: { min: 1.26, typ: 1.8, max: 2.3 } #[cite: 60]
+
+  control_bus_sccb:
+    protocol: "SCCB (I2C compatible)" #[cite: 3, 22]
+    register_address_bits: 16 #[cite: 33]
+    register_data_bits: 8 #[cite: 33]
+    endianness: "Big-Endian (High byte at lower address, Low byte at higher address)" #[cite: 33, 36]
+    slave_addresses:
+      sid_low_0:
+        write_8bit: 0x6C #[cite: 15, 33]
+        read_8bit: 0x6D #[cite: 33]
+        i2c_7bit: 0x36 # (0x6C >> 1)[cite: 33]
+      sid_high_1:
+        write_8bit: 0x20 #[cite: 15, 33]
+        read_8bit: 0x21 #[cite: 33]
+        i2c_7bit: 0x10 # (0x20 >> 1)[cite: 33]
+    programmable_address:
+      id_register: 0x0107 # Default 0x78 (8-bit)[cite: 34]
+      enable_register: 0x3031 # Bit[1] enables programmable ID[cite: 34]
+
+  data_bus_mipi_csi2:
+    interface_type: "MIPI CSI-2 D-PHY" #[cite: 3, 16]
+    data_lanes: 1 #[cite: 3, 16]
+    max_data_rate_mbps: 480 #[cite: 16]
+    typical_link_rate_mbps: 360 #[cite: 16]
+    differential_impedance_ohms: 100 #[cite: 15]
+    supported_formats:
+      - name: "RAW10" #[cite: 16, 35]
+        bits_per_pixel: 10 #[cite: 3, 16]
+        mipi_data_type: 0x2B # Default 0x4814 = 0x2A; configurable via 0x3654[5]=0[cite: 35, 47]
+        v4l2_mbus_code_ov9234_ir: "MEDIA_BUS_FMT_Y10_1X10" # Monochrome / IR[cite: 3, 13, 16]
+        v4l2_mbus_code_ov9734_rgb: "MEDIA_BUS_FMT_SBGGR10_1X10" # BG/GR Bayer[cite: 23]
+      - name: "RAW8" #[cite: 16, 35]
+        bits_per_pixel: 8 #[cite: 16, 35]
+        register_config: "0x3654[5] = 1" #[cite: 35]
+        v4l2_mbus_code_ov9234_ir: "MEDIA_BUS_FMT_Y8_1X8" # Monochrome / IR[cite: 3, 13, 16]
+        v4l2_mbus_code_ov9734_rgb: "MEDIA_BUS_FMT_SBGGR8_1X8" # BG/GR Bayer[cite: 23]
+
+# ==============================================================================
+# 2. POWER UP, POWER DOWN & RESET SEQUENCES
+# ==============================================================================
+lifecycle_sequences:
+  power_up_sequence: #[cite: 17, 18]
+    notes:
+      - "AVDD and DOVDD may ramp up in any order (t0, t1 >= 0 ns)." #[cite: 17, 18]
+      - "DVDD must ramp up AFTER both AVDD and DOVDD have risen (t8 >= 0 ns)." #[cite: 17, 18]
+      - "XVCLK may be free-running or gated, but must be active for at least t4 (8192 XVCLK cycles) before the first SCCB transaction." #[cite: 17, 18]
+    steps:
+      - step: 1
+        action: "Assert XSHUTDN LOW (0) to hold sensor in hardware standby." #[cite: 11, 18]
+      - step: 2
+        action: "Enable AVDD (2.8V) and DOVDD (1.8V) in any order." #[cite: 17, 18]
+        timing_constraint: { label: "t0/t1", min_ns: 0 } #[cite: 17]
+      - step: 3
+        action: "Enable DVDD (1.2V) after AVDD and DOVDD are stable." #[cite: 17, 18]
+        timing_constraint: { label: "t8", min_ns: 0 } #[cite: 17]
+      - step: 4
+        action: "Enable XVCLK (e.g., 24 MHz) if gated, and deassert XSHUTDN HIGH (1)." #[cite: 17, 18, 61]
+        timing_constraint: { label: "t2", min_ns: 0, description: "DVDD rising to XSHUTDN rising" } #[cite: 17]
+      - step: 5
+        action: "Wait before issuing first SCCB (I2C) transaction." #[cite: 17, 18]
+        timing_constraint:
+          label: "t3 / t4" #[cite: 17, 18]
+          min_xvclk_cycles: 8192 # ~0.342 ms at 24 MHz; AC spec hardware reset settling < 1 ms[cite: 17, 61]
+          recommended_driver_delay_ms: 1.0 #[cite: 61]
+    post_power_up_timings:
+      pll_lock_and_stream_start_max_ms: 10.0 # Table 2-3 (t5/t6)[cite: 17]
+      software_reset_settling_max_ms: 1.0 # Table 7-4[cite: 61]
+      register_setting_settling_max_ms: 1.0 # Table 7-4[cite: 61]
+      resolution_mode_change_settling_max_ms: 300.0 # Table 7-4[cite: 61]
+
+  power_down_sequence: #[cite: 19, 20]
+    notes:
+      - "If SCCB sleep command (0x0100=0x00) is sent during active frame readout, sensor waits for frame end before entering software standby (unless 0x0106[0]=1)." #[cite: 19, 20, 33]
+      - "OmniVision recommends cutting off all power supplies including external DVDD when sensor is not in use." #[cite: 17]
+    steps:
+      - step: 1
+        action: "Write 0x0100 = 0x00 via SCCB to enter software standby." #[cite: 19, 20, 33]
+        timing_constraint: { label: "t0", description: "Wait for current frame readout to finish if streaming" } #[cite: 19, 20]
+      - step: 2
+        action: "Maintain XVCLK active and wait before asserting XSHUTDN LOW." #[cite: 19, 20]
+        timing_constraint:
+          label: "t1 / t2" #[cite: 19, 20]
+          min_xvclk_cycles: 512 # After last SCCB transaction or MIPI frame end, whichever is later[cite: 19, 20]
+      - step: 3
+        action: "Assert XSHUTDN LOW (0) and optionally gate XVCLK." #[cite: 19, 20]
+      - step: 4
+        action: "Disable DVDD (1.2V) first." #[cite: 19, 20]
+        timing_constraint: { label: "t8", min_ns: 0, description: "XSHUTDN falling to DVDD falling" } #[cite: 19, 20]
+      - step: 5
+        action: "Disable AVDD (2.8V) and DOVDD (1.8V) in any order after DVDD falls." #[cite: 19, 20]
+        timing_constraint: { label: "t3 / t4 / t5", min_ns: 0, description: "DVDD falling to AVDD/DOVDD falling" } #[cite: 19, 20]
+
+  deep_software_sleep_sequences: # Required to achieve minimum software standby current (60 uA typ)[cite: 33, 60]
+    sleep_on: #[cite: 33, 60]
+      - { reg: 0x0100, val: 0x00 } # Software standby[cite: 33, 60]
+      - { reg: 0x3658, val: 0xFF } # Analog standby control[cite: 33, 60]
+      - { reg: 0x3659, val: 0xFF } # Analog standby control[cite: 33, 60]
+      - { reg: 0x365A, val: 0xFF } # Analog standby control[cite: 33, 60]
+      - { reg: 0x308B, val: 0x01 } # Clock/PLL standby control[cite: 33, 60]
+    sleep_off_and_stream_on: #[cite: 33, 60]
+      - { reg: 0x3658, val: 0x00 } # Restore analog state[cite: 33, 60]
+      - { reg: 0x3659, val: 0x00 } # Restore analog state[cite: 33, 60]
+      - { reg: 0x365A, val: 0x00 } # Restore analog state[cite: 33, 60]
+      - { reg: 0x308B, val: 0x00 } # Restore clock/PLL state[cite: 33, 60]
+      - { reg: 0x0100, val: 0x01 } # Enter streaming mode[cite: 33, 60]
+
+# ==============================================================================
+# 3. CLOCK & PLL ARCHITECTURE
+# ==============================================================================
+clock_and_pll_tree: #[cite: 21, 35, 61]
+  modification_rule: "PLL registers may ONLY be modified while in software standby mode (0x0100 = 0x00)." #[cite: 21]
+  xvclk_input:
+    freq_mhz: { min: 6.0, typ: 24.0, max: 27.0 } #[cite: 3, 21, 61]
+    duty_cycle_percent: { min: 45, typ: 50, max: 55 } #[cite: 61]
+    max_period_jitter_ps_pp: 600 #[cite: 61]
+    max_rise_fall_time_ratio: 0.27 # Max 27% of whole clock period (min 1 ns)[cite: 61]
+  vco_stage:
+    freq_range_mhz: { min: 500.0, max: 1200.0 } #[cite: 21]
+    pre_div:
+      register: 0x3080 # Bits [2:0], default 0x02[cite: 21, 35]
+      supported_divisors: [1, 1.5, 2, 2.5, 3, 4, 5, 6] #[cite: 21]
+    multiplier:
+      register: 0x3081 # Bits [7:0], default 0x3C (60)[cite: 21, 35]
+      formula: "f_VCO = (f_XVCLK / pre_div) * multiplier" #[cite: 21]
+  clock_branches:
+    dac_clock_branch: # Generates SA1_CLK[cite: 21]
+      dac_div_reg: "0x3084[3:0]" # Supported divisors: /4, /4.5, /5, /5.5, /6, /6.5, /7, /7.5, /8, /8.5, /9 -> PLL_DAC_CLK[cite: 21]
+      sa1_div_reg: "0x3030[3:2]" # 0b00/0b11: /1, 0b01: /2, 0b10: /4 -> SA1_CLK[cite: 21]
+    system_clock_branch: # Generates SYS_CLK (used for exposure/frame timing)[cite: 21]
+      sys_div_reg: "0x3082[3:0]" # Divisor = 1 + r_divsys[3:0] (default 0x04 -> /5)[cite: 21, 35]
+      pix_div_reg: "0x3083[0]" # Divisor = /2 or /4 (default 0x00) -> PLL_SCLK[cite: 21, 35]
+      dig_sys_div_reg: "0x3103[6:4]" # 0x0..0x7 divides by 1..8 (default 0x01) -> SYS_CLK[cite: 21, 35]
+      formula: "f_SYS_CLK = f_VCO / ((1 + reg_0x3082[3:0]) * pix_div * dig_sys_div)" #[cite: 21, 35]
+    pixel_clock_branch: # Generates PIX_CLK[cite: 21]
+      mipi_div_reg: "0x3089[1:0]" # Divisor = 1 + r_divpix[1:0][cite: 21]
+      phy_div_reg: "0x308A[0]" # Divisor = /4 or /5 -> PLL_PCLK[cite: 21]
+      pclk_div_reg: "0x301E[7:6]" # 0b00/0b11: /1, 0b01: /2, 0b10: /4 -> PIX_CLK[cite: 21]
+    mipi_phy_clock_branch: # Generates MIPI_PHY_CLK[cite: 21]
+      mipi_div_reg: "0x3089[1:0]" # Divisor = 1 + r_divpix[1:0] -> PLL_MIPI_CLK -> MIPI_PHY_CLK[cite: 21]
+
+# ==============================================================================
+# 4. PIXEL ARRAY GEOMETRY & STANDARD OPERATING MODES
+# ==============================================================================
+pixel_array_and_modes:
+  physical_array:
+    total_columns: 1296 # Columns 0..1295[cite: 23]
+    total_rows: 736 # Rows 0..735 (953,856 total pixels)[cite: 23]
+    dummy_border:
+      top_rows: "0..7" #[cite: 23]
+      bottom_rows: "728..735" #[cite: 23]
+      left_columns: "0..7" #[cite: 23]
+      right_columns: "1288..1295" #[cite: 23]
+    suggested_array_window: # Center 1288x728 used by ISP before final 4-pixel x/y window offset[cite: 23, 36, 37]
+      x_addr_start: 4 # 0x3800..0x3801 = 0x0004[cite: 36]
+      y_addr_start: 4 # 0x3802..0x3803 = 0x0004[cite: 36]
+      x_addr_end: 1291 # 0x3804..0x3805 = 0x050B (1291 - 4 + 1 = 1288)[cite: 23, 36]
+      y_addr_end: 731 # 0x3806..0x3807 = 0x02DB (731 - 4 + 1 = 728)[cite: 23, 36, 37]
+      isp_x_win_offset: 4 # 0x3810..0x3811 = 0x0004[cite: 37]
+      isp_y_win_offset: 4 # 0x3812..0x3813 = 0x0004[cite: 37]
+      active_output_width: 1280 # 0x3808..0x3809 = 0x0500[cite: 23, 37]
+      active_output_height: 720 # 0x380A..0x380B = 0x02D0[cite: 23, 37]
+
+  standard_modes: # Table 2-2[cite: 16]
+    - mode_id: "720p_30fps_full" #[cite: 16]
+      output_width: 1280 #[cite: 16, 37]
+      output_height: 720 #[cite: 16, 37]
+      array_readout_size: "1288x728" # (1280+8) x (720+8)[cite: 16]
+      max_fps: 30 #[cite: 13, 16]
+      methodology: "Full resolution readout" #[cite: 16]
+      mipi_speed_mbps: 360 #[cite: 16]
+      default_timing:
+        hts_pixels_per_line: 1478 # 0x380C..0x380D = 0x05C6[cite: 37]
+        vts_lines_per_frame: 802 # 0x380E..0x380F = 0x0322[cite: 37]
+        binning_enabled: false #[cite: 16]
+
+    - mode_id: "vga_45fps_crop" #[cite: 16]
+      output_width: 640 #[cite: 13, 16]
+      output_height: 480 #[cite: 13, 16]
+      array_readout_size: "648x488" # (640+8) x (480+8)[cite: 16]
+      max_fps: 45 #[cite: 13, 16]
+      methodology: "Center crop from full array" #[cite: 16]
+      mipi_speed_mbps: 360 #[cite: 16]
+
+    - mode_id: "360p_60fps_2x2_bw_binning" # Specific to OV9234 B&W/IR sensor[cite: 3, 16, 24]
+      output_width: 640 #[cite: 3, 16]
+      output_height: 360 #[cite: 3, 16]
+      array_readout_size: "644x364" # (640+4) x (360+4)[cite: 16]
+      max_fps: 60 #[cite: 16]
+      methodology: "Horizontal neighbor pixel averaging ((P00+P01)/2, (P02+P03)/2); vertical neighbor pixel subsampling (skip odd rows)" #[cite: 16, 24]
+      mipi_speed_mbps: 360 #[cite: 16]
+      binning_registers:
+        - { reg: 0x37C0, bit: 2, val: 1, desc: "Select binning average (0=sum, 1=average)" } #[cite: 24]
+        - { reg: 0x3820, bits: "1:0", desc: "Bit[1]=hbin, Bit[0]=vbin" } #[cite: 24, 38]
+        - { reg: 0x3821, bits: "3:0", desc: "Bit[3:2]=hsub, Bit[1:0]=vsub (01=sub2)" } #[cite: 38]
+
+# ==============================================================================
+# 5. DRIVER FUNCTIONAL PRIMITIVES (HOW TO IMPLEMENT DRIVER CALLBACKS)
+# ==============================================================================
+driver_functional_primitives:
+  chip_identification:
+    description: "Verify sensor presence on SCCB bus before initialization." #[cite: 33]
+    registers:
+      chip_id_high: { address: 0x300A, expected_value: 0x97 } # Note: Both OV9734 and OV9234 report 0x9734[cite: 33]
+      chip_id_low:  { address: 0x300B, expected_value: 0x34 } #[cite: 33]
+      chip_revision: { address: 0x302A, expected_value: 0xA0 } #[cite: 33]
+
+  software_reset:
+    description: "Resets all registers to power-up default values; bit self-clears." #[cite: 33]
+    sequence:
+      - { write_reg: 0x0103, value: 0x01 } #[cite: 33]
+      - { delay_ms: 1 } # Settling time < 1 ms[cite: 61]
+
+  group_write_atomic_update:
+    description: "Buffers up to 16 bytes of register writes (excluding 0x31xx) in SRAM and latches them atomically at frame boundary." #[cite: 22]
+    control_register: 0x3208 #[cite: 22]
+    sequence:
+      - { step: "start_hold", write_reg: 0x3208, value: 0x00 } # Group 0 hold start[cite: 22]
+      - { step: "write_payload", description: "Write up to 16 target registers (e.g., exposure + gain + VTS)" } #[cite: 22]
+      - { step: "end_hold", write_reg: 0x3208, value: 0x10 } # Group 0 hold end[cite: 22]
+      - { step: "launch_group", write_reg: 0x3208, value: 0xA0 } # Launch buffered group at frame boundary[cite: 22]
+
+  exposure_control_aec:
+    description: "Manual rolling-shutter exposure time in units of row interval (t_ROW)." #[cite: 3, 29, 39]
+    mode_register:
+      address: 0x3503 # Default 0x03[cite: 39]
+      bit: 0 # aec_manual: 1 = Manual exposure, 0 = Reserved[cite: 29, 39]
+    value_registers:
+      high_bits_19_16: { address: 0x3500, mask: 0x0F } # LONG_EXPO[19:16][cite: 39]
+      mid_bits_15_8:   { address: 0x3501, mask: 0xFF } # LONG_EXPO[15:8][cite: 29, 39]
+      low_bits_7_0:    { address: 0x3502, mask: 0xFF } # LONG_EXPO[7:0], where bits [3:0] are fractional bits[cite: 29, 39]
+    encoding_formula:
+      fixed_point_format: "Q16.4 (16 integer bits in [19:4], 4 fractional bits in [3:0])" #[cite: 39]
+      integer_lines_to_reg: "reg_20bit = exposure_lines << 4" #[cite: 39]
+      reg_writes:
+        "0x3500": "(reg_20bit >> 16) & 0x0F" #[cite: 39]
+        "0x3501": "(reg_20bit >> 8) & 0xFF" #[cite: 29, 39]
+        "0x3502": "reg_20bit & 0xFF" #[cite: 29, 39]
+    constraints:
+      min_exposure_lines: 4 # Required for optimal performance per FAE note[cite: 39]
+      max_exposure_lines_formula: "VTS - 4" # Max exposure is 798 * t_ROW when VTS = 802 (0x0322)[cite: 3, 37]
+
+  analog_gain_control_agc:
+    description: "Manual global analog gain control." #[cite: 29, 39, 40]
+    mode_register:
+      address: 0x3503 # Default 0x03[cite: 39]
+      bit: 1 # agc_manual: 1 = Manual gain, 0 = Reserved[cite: 29, 39]
+    value_registers:
+      high_bits_9_8: { address: 0x350A, mask: 0x03 } # analog_gain_code_global[9:8][cite: 29, 40]
+      low_bits_7_0:  { address: 0x350B, mask: 0xFF } # analog_gain_code_global[7:0][cite: 29, 40]
+    encoding_formula:
+      fixed_point_format: "Q6.4 (1x gain = 16 = 0x010)" #[cite: 29, 68]
+      min_gain_code: 0x010 # 1.0x gain (16 decimal)[cite: 29, 68]
+      max_gain_code: 0x0F8 # 15.5x gain (248 decimal)[cite: 29, 68]
+      gain_multiplier_to_code: "code = clamp(round(gain_x * 16), 16, 248)" #[cite: 29, 68]
+    gain_delay_option:
+      address: 0x3503 #[cite: 39]
+      bit_4: "gain_change_delay (0=Disable, 1=Enable)" #[cite: 39]
+      bit_5: "Gain change delay option (0=No delay, 1=Delay 1 frame)" #[cite: 39]
+
+  image_orientation_mirror_flip:
+    description: "Horizontal mirror and vertical flip control. IMPORTANT: BLC_flip (Bit[4]) must be toggled together with Vertical Flip (Bit[2])." #[cite: 27, 33, 38]
+    register: 0x3820 # Default 0x10[cite: 27, 33]
+    bitfields:
+      blc_flip: { bit: 4, desc: "Must match Bit[2] (0=OFF, 1=ON)" } #[cite: 27]
+      hmirror:  { bit: 3, desc: "Horizontal mirror (0=OFF, 1=ON)" } #[cite: 27, 33]
+      vflip:    { bit: 2, desc: "Vertical flip (0=OFF, 1=ON)" } #[cite: 27, 33]
+      hbin:     { bit: 1, desc: "Horizontal binning enable (preserve when modifying orientation)" } #[cite: 24, 38]
+      vbin:     { bit: 0, desc: "Vertical binning enable (preserve when modifying orientation)" } #[cite: 24, 38]
+
+  frame_rate_and_blanking:
+    description: "Adjust frame rate dynamically by modifying VTS (Vertical Total Size) or HTS (Horizontal Total Size)." #[cite: 37]
+    hts_registers: { high: 0x380C, low: 0x380D, default: 0x05C6 } # 1478 pixels per line[cite: 37]
+    vts_registers: { high: 0x380E, low: 0x380F, default: 0x0322 } # 802 lines per frame[cite: 37]
+    fractional_vts_registers: { high: 0x3826, low: 0x3827, default: 0x0000 } # FVTS[cite: 39]
+    vts_manual_enable: { address: 0x3503, bit: 3 } # vts_manual[cite: 39]
+    frame_counter_readback: { address: 0x4A00, access: "R", range: "0..255" } #[cite: 33]
+
+  test_pattern_generator:
+    description: "Enables internal test pattern (color/grayscale bars)." #[cite: 28, 55]
+    register: 0x5080 # PRE_ISP_CTRL0, default 0x00[cite: 28, 55]
+    enable_bit: 7 # 0 = Disable, 1 = Enable[cite: 28, 55]
+    style_bits: "3:2" #[cite: 28, 55]
+    styles:
+      0b00: "Standard bar (Type 1)" #[cite: 28, 55]
+      0b01: "Top-bottom darker bar (Type 2)" #[cite: 28, 55]
+      0b10: "Right-left darker bar (Type 3)" #[cite: 28, 55]
+      0b11: "Bottom-top darker bar (Type 4)" #[cite: 28, 55]
+
+  black_level_calibration_blc:
+    description: "Compensates for thermally induced dark current across gain and exposure changes." #[cite: 29]
+    enable_register: { address: 0x5000, bit: 0, default: 1 } # blc_en[cite: 29, 31, 53]
+    dcblc_enable: { address: 0x5000, bit: 1, default: 1 } # dcblc_en[cite: 31, 53]
+    mode_register: { address: 0x4001, bit: 4, values: { 0: "Auto mode", 1: "Manual offset mode" } } #[cite: 29, 40]
+    target_level_registers:
+      high_bits_9_8: { address: 0x4002, mask: 0x03, default: 0x00 } #[cite: 29, 40]
+      low_bits_7_0:  { address: 0x4003, mask: 0xFF, default: 0x10 } # Default black level target = 16 (0x010)[cite: 29, 41]
+
+  defect_pixel_correction_dpc:
+    description: "Hardware correction for black and white defective pixels and clusters." #[cite: 3, 31, 57]
+    master_enable_register: 0x5000 # Default 0x2F[cite: 31, 53]
+    bit_controls:
+      black_pixel_cancel_en: { bit: 3, default: 1 } # bc_en[cite: 31, 53]
+      white_pixel_cancel_en: { bit: 2, default: 1 } # wc_en[cite: 31, 53]
+    cluster_config_register: 0x5780 # Default 0x14 (3x3 cluster and cross-cluster enabled)[cite: 57]
+
+  external_frame_sync_fsin_vsync:
+    description: "Configures Pin B5 (FSIN/VSYNC) as either an external frame sync trigger input or VSYNC pulse output." #[cite: 11, 34, 37, 38]
+    io_direction_register: { address: 0x3001, bit: 0, values: { 0: "Input (FSIN)", 1: "Output (VSYNC)" } } #[cite: 16, 34]
+    control_register: 0x381C # Default 0x01[cite: 38]
+    control_bits:
+      vsync_polarity: { bit: 4 } #[cite: 38]
+      ext_vs_re: { bit: 3 } #[cite: 38]
+      ext_vs_en: { bit: 2 } # Enable external frame sync[cite: 38]
+    pulse_mask_register: { address: 0x381D, bits: "3:0", desc: "Sync/output every (fsin_mask + 1) pulses/frames" } #[cite: 38]
+    timing_registers:
+      vsync_cs_point: { high: 0x3814, low: 0x3815, default: 0x0001 } #[cite: 37]
+      vsync_start_row: { high: 0x3816, low: 0x3817, default: 0x0000 } #[cite: 37]
+      vsync_end_row: { high: 0x3818, low: 0x3819, default: 0x0004 } #[cite: 37]
+      cs_rst_fsin: { high: 0x3822, low: 0x3823, default: 0x0000 } #[cite: 38]
+      r_rst_fsin: { high: 0x3824, low: 0x3825, default: 0x0000 } #[cite: 38]
+
+# ==============================================================================
+# 6. COMPLETE REGISTER MAP (SECTIONS 2.3, 2.11, 3.2, 6.1 - 6.18)
+# ==============================================================================
+register_map:
+  # --- 6.1 General Status & System Control ---
+  0x0100:
+    name: "MODE_SELECT" #[cite: 33]
+    default: 0x00 #[cite: 33]
+    rw: "RW" #[cite: 33]
+    fields:
+      "0": "Mode select (0: Software Standby/Sleep, 1: Streaming)" #[cite: 33]
+  0x0103:
+    name: "SOFTWARE_RESET" #[cite: 33]
+    default: 0x00 #[cite: 33]
+    rw: "RW" #[cite: 33]
+    fields:
+      "0": "Software reset (1: Reset all registers to defaults; self-clearing)" #[cite: 33]
+  0x0106:
+    name: "FAST_STANDBY_CTRL" #[cite: 33]
+    default: 0x00 #[cite: 33]
+    rw: "RW" #[cite: 33]
+    fields:
+      "0": "Fast standby entry (0: Complete current frame before sleep, 1: Truncate frame immediately)" #[cite: 33]
+
+  # --- 6.2 SCCB Control ---
+  0x0107:
+    name: "CCI_ADDRESS_PGM_ID" #[cite: 34]
+    default: 0x78 #[cite: 34]
+    rw: "RW" #[cite: 34]
+    fields:
+      "7:0": "8-bit programmable SCCB slave ID" #[cite: 34]
+
+  # --- 2.3 & 6.3 I/O Control ---
+  0x3001:
+    name: "PCLK_HREF_VSYNC_OEN" #[cite: 16, 34]
+    default: 0x00 #[cite: 34]
+    rw: "RW" #[cite: 34]
+    fields:
+      "7:1": "Debug mode" #[cite: 34]
+      "0": "I/O direction for VSYNC/GPIO port & MIPI output enable (0: Input, 1: Output)" #[cite: 16, 34]
+  0x3002:
+    name: "GPIO_OEN" #[cite: 34]
+    default: 0x00 #[cite: 34]
+    rw: "RW" #[cite: 34]
+    fields:
+      "7:4": "Debug mode" #[cite: 34]
+      "3": "GPIO port 3 / MIPI output enable (0: Input, 1: Output)" #[cite: 16, 34]
+      "2": "GPIO port 2 / MIPI output enable (0: Input, 1: Output)" #[cite: 16, 34]
+      "1": "GPIO port 1 / MIPI output enable (0: Input, 1: Output)" #[cite: 16, 34]
+      "0": "GPIO port 0 / MIPI output enable (0: Input, 1: Output)" #[cite: 16, 34]
+  0x3009:
+    name: "PAD_DRIVE_CAPABILITY" # Table 2-1[cite: 16]
+    default: null
+    rw: "RW" #[cite: 16]
+    fields:
+      "6:5": "MIPI output drive capability (00: 1x, 01: 2x, 10: 3x, 11: 4x)" #[cite: 16]
+
+  # --- Chip Identification ---
+  0x300A:
+    name: "CHIP_ID_HIGH" #[cite: 33]
+    default: 0x97 #[cite: 33]
+    rw: "R" #[cite: 33]
+    fields:
+      "7:0": "Sensor Chip ID High Byte" #[cite: 33]
+  0x300B:
+    name: "CHIP_ID_LOW" #[cite: 33]
+    default: 0x34 #[cite: 33]
+    rw: "R" #[cite: 33]
+    fields:
+      "7:0": "Sensor Chip ID Low Byte" #[cite: 33]
+  0x301E:
+    name: "PLL_PCLK_DIV" # Figure 2-5[cite: 21]
+    default: null
+    rw: "RW"
+    fields:
+      "7:6": "PLL PCLK to PIX_CLK divider (00/11: /1, 01: /2, 10: /4)" #[cite: 21]
+  0x302A:
+    name: "CHIP_REVISION" #[cite: 33]
+    default: 0xA0 #[cite: 33]
+    rw: "R" #[cite: 33]
+    fields:
+      "7:0": "Chip revision number" #[cite: 33]
+  0x3030:
+    name: "PLL_DAC_SA1_DIV" # Figure 2-5[cite: 21]
+    default: null
+    rw: "RW"
+    fields:
+      "3:2": "PLL DAC CLK to SA1 CLK divider (00/11: /1, 01: /2, 10: /4)" #[cite: 21]
+  0x3031:
+    name: "SCCB_CTRL" #[cite: 34]
+    default: 0x02 #[cite: 34]
+    rw: "RW" #[cite: 34]
+    fields:
+      "7:2": "Not used" #[cite: 34]
+      "1": "SCCB programmable ID enable" #[cite: 34]
+      "0": "sccb_id2_nack_en" #[cite: 34]
+
+  # --- 2.9 & 6.4 Clock & PLL Configuration ---
+  0x3080:
+    name: "PRE_PLL_CLK_DIV" #[cite: 35]
+    default: 0x02 #[cite: 35]
+    rw: "RW" #[cite: 35]
+    fields:
+      "7:3": "Debug mode" #[cite: 35]
+      "2:0": "Pre-PLL clock divider (/1, /1.5, /2, /2.5, /3, /4, /5, /6)" #[cite: 21, 35]
+  0x3081:
+    name: "PLL_MULTIPLIER" #[cite: 35]
+    default: 0x3C #[cite: 35]
+    rw: "RW" #[cite: 35]
+    fields:
+      "7:0": "PLL multiplier value (VCO = 500 to 1200 MHz)" #[cite: 21, 35]
+  0x3082:
+    name: "VT_SYS_CLK_DIV" #[cite: 35]
+    default: 0x04 #[cite: 35]
+    rw: "RW" #[cite: 35]
+    fields:
+      "7:4": "Debug mode" #[cite: 35]
+      "3:0": "Video timing system clock divider (Divisor = 1 + r_divsys[3:0])" #[cite: 21, 35]
+  0x3083:
+    name: "VT_PIXEL_CLK_DIV" #[cite: 35]
+    default: 0x00 #[cite: 35]
+    rw: "RW" #[cite: 35]
+    fields:
+      "7:1": "Debug mode" #[cite: 35]
+      "0": "Video timing pixel clock divider (/2 or /4)" #[cite: 21, 35]
+  0x3084:
+    name: "PLL_DAC_DIV" # Figure 2-5[cite: 21]
+    default: null
+    rw: "RW"
+    fields:
+      "3:0": "DAC clock divider (/4, /4.5, /5, /5.5, /6, /6.5, /7, /7.5, /8, /8.5, /9)" #[cite: 21]
+  0x3089:
+    name: "PLL_MIPI_DIV" # Figure 2-5[cite: 21]
+    default: null
+    rw: "RW"
+    fields:
+      "1:0": "MIPI clock divider (Divisor = 1 + r_divpix[1:0])" #[cite: 21]
+  0x308A:
+    name: "PLL_PHY_DIV" # Figure 2-5[cite: 21]
+    default: null
+    rw: "RW"
+    fields:
+      "0": "PHY clock divider (/4 or /5)" #[cite: 21]
+  0x308B:
+    name: "PLL_SLEEP_CTRL" # Table 6-1 & 7-3 note[cite: 33, 60]
+    default: 0x00 #[cite: 33, 60]
+    rw: "RW"
+    fields:
+      "0": "Deep standby clock gate (0x01 during Sleep_On, 0x00 during Sleep_Off)" #[cite: 33, 60]
+  0x3103:
+    name: "SYS_CLK_DIV" #[cite: 35]
+    default: 0x01 #[cite: 35]
+    rw: "RW" #[cite: 35]
+    fields:
+      "7": "Debug mode" #[cite: 35]
+      "6:4": "Digital output system clock divider (0x0..0x7 = Divide by 1..8)" #[cite: 21, 35]
+      "3:0": "Debug mode" #[cite: 35]
+
+  # --- 2.11 Group Write Control ---
+  0x3208:
+    name: "GROUP_ACCESS" #[cite: 22]
+    default: null
+    rw: "W" #[cite: 22]
+    fields:
+      "7:4": "group_ctrl (0000: Group hold start, 0001: Group hold end, 1010: Launch group)" #[cite: 22]
+      "3:0": "Group ID / Debug mode" #[cite: 22]
+
+  # --- 6.10 AEC / AGC Control ---
+  0x3500:
+    name: "LONG_EXPO_HIGH" #[cite: 39]
+    default: 0x00 #[cite: 39]
+    rw: "RW" #[cite: 39]
+    fields:
+      "7:4": "Debug mode" #[cite: 39]
+      "3:0": "Long exposure[19:16]" #[cite: 39]
+  0x3501:
+    name: "LONG_EXPO_MID" #[cite: 39]
+    default: 0x20 #[cite: 39]
+    rw: "RW" #[cite: 39]
+    fields:
+      "7:0": "Long exposure[15:8]" #[cite: 29, 39]
+  0x3502:
+    name: "LONG_EXPO_LOW" #[cite: 39]
+    default: 0x00 #[cite: 39]
+    rw: "RW" #[cite: 39]
+    fields:
+      "7:4": "Long exposure[7:4] (lowest integer bits)" #[cite: 39]
+      "3:0": "Long exposure[3:0] (fractional bits)" #[cite: 39]
+  0x3503:
+    name: "AEC_MANUAL" #[cite: 39]
+    default: 0x03 #[cite: 39]
+    rw: "RW" #[cite: 39]
+    fields:
+      "7:6": "Not used" #[cite: 39]
+      "5": "Gain change delay option (0: Do not delay 1 frame, 1: Delay 1 frame)" #[cite: 39]
+      "4": "gain_change_delay enable (0: Disable, 1: Enable)" #[cite: 39]
+      "3": "vts_manual" #[cite: 39]
+      "2": "Reserved" #[cite: 39]
+      "1": "agc_manual (0: Reserved, 1: Manual gain)" #[cite: 29, 39]
+      "0": "aec_manual (0: Reserved, 1: Manual exposure)" #[cite: 29, 39]
+  0x3504:
+    name: "MANUAL_SNR_GAIN_HIGH" #[cite: 39]
+    default: 0x00 #[cite: 39]
+    rw: "RW" #[cite: 39]
+    fields:
+      "7:2": "Not used" #[cite: 39]
+      "1:0": "Manual sensor gain[9:8]" #[cite: 39]
+  0x3505:
+    name: "MANUAL_SNR_GAIN_LOW" #[cite: 39]
+    default: 0x00 #[cite: 39]
+    rw: "RW" #[cite: 39]
+    fields:
+      "7:0": "Manual sensor gain[7:0]" #[cite: 39]
+  0x3509:
+    name: "AEC_CTRL_9" #[cite: 39]
+    default: 0x10 #[cite: 39]
+    rw: "RW" #[cite: 39]
+    fields:
+      "7:5": "Not used" #[cite: 39]
+      "4": "convert_en" #[cite: 39]
+      "3": "gain_man_en" #[cite: 39]
+      "2:0": "Not used" #[cite: 39]
+  0x350A:
+    name: "LONG_GAIN_HIGH" #[cite: 40]
+    default: 0x00 #[cite: 40]
+    rw: "RW" #[cite: 40]
+    fields:
+      "7:2": "Not used" #[cite: 40]
+      "1:0": "Long gain / analog_gain_code_global[9:8]" #[cite: 29, 40]
+  0x350B:
+    name: "LONG_GAIN_LOW" #[cite: 40]
+    default: 0x10 #[cite: 40]
+    rw: "RW" #[cite: 40]
+    fields:
+      "7:0": "Long gain / analog_gain_code_global[7:0] (0x10 = 1x, 0xF8 = 15.5x)" #[cite: 29, 40]
+  0x3510:
+    name: "PK_GAIN_HIGH" #[cite: 40]
+    default: null
+    rw: "R" #[cite: 40]
+    fields:
+      "1:0": "pk_gain_o[9:8]" #[cite: 40]
+  0x3511:
+    name: "PK_GAIN_LOW" #[cite: 40]
+    default: null
+    rw: "R" #[cite: 40]
+    fields:
+      "7:0": "pk_gain_o[7:0]" #[cite: 40]
+  0x3512:
+    name: "SNR_GAIN_HIGH" #[cite: 40]
+    default: null
+    rw: "R" #[cite: 40]
+    fields:
+      "1:0": "snr_gain[9:8]" #[cite: 40]
+  0x3513:
+    name: "SNR_GAIN_LOW" #[cite: 40]
+    default: null
+    rw: "R" #[cite: 40]
+    fields:
+      "7:0": "snr_gain[7:0]" #[cite: 40]
+
+  # --- 6.5, 6.6, 6.7, 6.8 Analog, Output Format, Sensor & PSRAM Control ---
+  "0x3600..0x363F":
+    name: "ANALOG_CTRL_RSVD" #[cite: 35]
+    rw: "RSVD" #[cite: 35]
+  0x3654:
+    name: "FMT_CTRL" #[cite: 35]
+    default: 0x10 #[cite: 35]
+    rw: "RW" #[cite: 35]
+    fields:
+      "7:6": "Debug mode" #[cite: 35]
+      "5": "RAW8/RAW10 output select (0: RAW10, 1: RAW8)" #[cite: 35]
+      "4:0": "Debug mode" #[cite: 35]
+  "0x3658..0x365A":
+    name: "STANDBY_POWER_CTRL" # Table 6-1 & 7-3 note[cite: 33, 60]
+    default: 0x00 #[cite: 33, 60]
+    rw: "RW"
+    fields:
+      "7:0": "Set all to 0xFF during Sleep_On and 0x00 during Sleep_Off" #[cite: 33, 60]
+  "0x3700..0x370C":
+    name: "SENSOR_CTRL_RSVD" #[cite: 36]
+    rw: "RSVD" #[cite: 36]
+  "0x3780..0x3785":
+    name: "PSRAM_CTRL_RSVD" #[cite: 36]
+    rw: "RSVD" #[cite: 36]
+  0x37C0:
+    name: "BIN_AVG" # Table 3-1[cite: 24]
+    default: 0x07 #[cite: 24]
+    rw: "RW" #[cite: 24]
+    fields:
+      "2": "Binning average/sum select (0: Binning sum, 1: Binning average)" #[cite: 24]
+
+  # --- 6.9 Frame Timing & Windowing ---
+  0x3800: { name: "X_ADDR_START_HIGH", default: 0x00, rw: "RW", fields: { "7:0": "x_addr_start[15:8]" } } #[cite: 36]
+  0x3801: { name: "X_ADDR_START_LOW",  default: 0x04, rw: "RW", fields: { "7:0": "x_addr_start[7:0]" } } #[cite: 36]
+  0x3802: { name: "Y_ADDR_START_HIGH", default: 0x00, rw: "RW", fields: { "7:0": "y_addr_start[15:8]" } } #[cite: 36]
+  0x3803: { name: "Y_ADDR_START_LOW",  default: 0x04, rw: "RW", fields: { "7:0": "y_addr_start[7:0]" } } #[cite: 36]
+  0x3804: { name: "X_ADDR_END_HIGH",   default: 0x05, rw: "RW", fields: { "7:0": "x_addr_end[15:8]" } } #[cite: 36]
+  0x3805: { name: "X_ADDR_END_LOW",    default: 0x0B, rw: "RW", fields: { "7:0": "x_addr_end[7:0]" } } #[cite: 36]
+  0x3806: { name: "Y_ADDR_END_HIGH",   default: 0x02, rw: "RW", fields: { "7:0": "y_addr_end[15:8]" } } #[cite: 36]
+  0x3807: { name: "Y_ADDR_END_LOW",    default: 0xDB, rw: "RW", fields: { "7:0": "y_addr_end[7:0]" } } #[cite: 37]
+  0x3808: { name: "X_OUTPUT_SIZE_HIGH", default: 0x05, rw: "RW", fields: { "7:0": "x_output_size[15:8] (ISP horizontal width)" } } #[cite: 37]
+  0x3809: { name: "X_OUTPUT_SIZE_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "x_output_size[7:0] (ISP horizontal width)" } } #[cite: 37]
+  0x380A: { name: "Y_OUTPUT_SIZE_HIGH", default: 0x02, rw: "RW", fields: { "7:0": "y_output_size[15:8] (ISP vertical height)" } } #[cite: 37]
+  0x380B: { name: "Y_OUTPUT_SIZE_LOW",  default: 0xD0, rw: "RW", fields: { "7:0": "y_output_size[7:0] (ISP vertical height)" } } #[cite: 37]
+  0x380C: { name: "HTS_HIGH",          default: 0x05, rw: "RW", fields: { "7:0": "HTS[15:8] (Total pixels per line)" } } #[cite: 37]
+  0x380D: { name: "HTS_LOW",           default: 0xC6, rw: "RW", fields: { "7:0": "HTS[7:0] (Total pixels per line)" } } #[cite: 37]
+  0x380E: { name: "VTS_HIGH",          default: 0x03, rw: "RW", fields: { "7:0": "VTS[15:8] (Total lines per frame)" } } #[cite: 37]
+  0x380F: { name: "VTS_LOW",           default: 0x22, rw: "RW", fields: { "7:0": "VTS[7:0] (Total lines per frame)" } } #[cite: 37]
+  0x3810: { name: "ISP_X_WIN_HIGH",    default: 0x00, rw: "RW", fields: { "7:0": "isp_x_win[15:8] (Horizontal window offset)" } } #[cite: 37]
+  0x3811: { name: "ISP_X_WIN_LOW",     default: 0x04, rw: "RW", fields: { "7:0": "isp_x_win[7:0] (Horizontal window offset)" } } #[cite: 37]
+  0x3812: { name: "ISP_Y_WIN_HIGH",    default: 0x00, rw: "RW", fields: { "7:0": "isp_y_win[15:8] (Vertical window offset)" } } #[cite: 37]
+  0x3813: { name: "ISP_Y_WIN_LOW",     default: 0x04, rw: "RW", fields: { "7:0": "isp_y_win[7:0] (Vertical window offset)" } } #[cite: 37]
+  0x3814: { name: "VSYNC_CS_POINT_HIGH", default: 0x00, rw: "RW", fields: { "7:0": "vsync_cs_point[15:8]" } } #[cite: 37]
+  0x3815: { name: "VSYNC_CS_POINT_LOW",  default: 0x01, rw: "RW", fields: { "7:0": "vsync_cs_point[7:0]" } } #[cite: 37]
+  0x3816: { name: "VSYNC_START_ROW_HIGH", default: 0x00, rw: "RW", fields: { "7:0": "vsync_start_row[15:8]" } } #[cite: 37]
+  0x3817: { name: "VSYNC_START_ROW_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "vsync_start_row[7:0]" } } #[cite: 37]
+  0x3818: { name: "VSYNC_END_ROW_HIGH",   default: 0x00, rw: "RW", fields: { "7:0": "vsync_end_row[15:8]" } } #[cite: 37]
+  0x3819: { name: "VSYNC_END_ROW_LOW",    default: 0x04, rw: "RW", fields: { "7:0": "vsync_end_row[7:0]" } } #[cite: 37]
+  0x381A: { name: "HSYNC_FIRST_HIGH",     default: 0x00, rw: "RW", fields: { "7:0": "hsync_first[15:8]" } } #[cite: 38]
+  0x381B: { name: "HSYNC_FIRST_LOW",      default: 0x00, rw: "RW", fields: { "7:0": "hsync_first[7:0]" } } #[cite: 38]
+  0x381C:
+    name: "TIMING_REG1C" #[cite: 38]
+    default: 0x01 #[cite: 38]
+    rw: "RW" #[cite: 38]
+    fields:
+      "7:6": "Not used" #[cite: 38]
+      "5": "init_man" #[cite: 38]
+      "4": "vsync_polarity" #[cite: 38]
+      "3": "ext_vs_re" #[cite: 38]
+      "2": "ext_vs_en" #[cite: 38]
+      "1:0": "grp_wr_start" #[cite: 38]
+  0x381D:
+    name: "FSIN_MASK" #[cite: 38]
+    default: null
+    rw: "RW" #[cite: 38]
+    fields:
+      "7:4": "Not used" #[cite: 38]
+      "3:0": "fsin_mask (Input mode: sync every N+1 FSIN pulses; Output mode: output VSYNC every N+1 frames)" #[cite: 38]
+  0x3820:
+    name: "FORMAT0_ORIENTATION" #[cite: 24, 27, 33, 38]
+    default: 0x10 # Listed as 0x10 in Table 4-1/6-1 and 0x08 in Table 3-1[cite: 24, 27, 33]
+    rw: "RW" #[cite: 33, 38]
+    fields:
+      "7:5": "Debug mode / Not used" #[cite: 33, 38]
+      "4": "BLC_Flip (Control together with Bit[2] vflip: 0=OFF, 1=ON)" #[cite: 27, 33, 38]
+      "3": "Mirror (Horizontal mirror: 0=Disable, 1=Enable)" #[cite: 27, 33, 38]
+      "2": "vflip (Vertical flip: 0=Disable, 1=Enable)" #[cite: 27, 33, 38]
+      "1": "hbin (Horizontal binning enable)" #[cite: 24, 38]
+      "0": "vbin (Vertical binning enable)" #[cite: 24, 38]
+  0x3821:
+    name: "FORMAT1_SUBSAMPLING" #[cite: 38]
+    default: 0x00 #[cite: 38]
+    rw: "RW" #[cite: 38]
+    fields:
+      "3:2": "hsub (00: Full, 01: hsub2, 10: hsub4)" #[cite: 38]
+      "1:0": "vsub (00: Full, 01: vsub2, 10: vsub4)" #[cite: 38]
+  0x3822: { name: "CS_RST_FSIN_HIGH", default: 0x00, rw: "RW", fields: { "7:0": "cs_rst_fsin[15:8]" } } #[cite: 38]
+  0x3823: { name: "CS_RST_FSIN_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "cs_rst_fsin[7:0]" } } #[cite: 38]
+  0x3824: { name: "R_RST_FSIN_HIGH",  default: 0x00, rw: "RW", fields: { "7:0": "r_rst_fsin[15:8]" } } #[cite: 38]
+  0x3825: { name: "R_RST_FSIN_LOW",   default: 0x00, rw: "RW", fields: { "7:0": "r_rst_fsin[7:0]" } } #[cite: 38]
+  0x3826: { name: "FVTS_HIGH",        default: 0x00, rw: "RW", fields: { "7:0": "FVTS[15:8] (Fractional vertical timing size)" } } #[cite: 39]
+  0x3827: { name: "FVTS_LOW",         default: 0x00, rw: "RW", fields: { "7:0": "FVTS[7:0] (Fractional vertical timing size)" } } #[cite: 39]
+  0x3828: { name: "LN_SYNC_POINT_HIGH", default: 0x00, rw: "RW", fields: { "7:0": "ln_sync_point[15:8] (Unit: 16x sclk)" } } #[cite: 39]
+  0x3829: { name: "LN_SYNC_POINT_LOW",  default: 0x10, rw: "RW", fields: { "7:0": "ln_sync_point[7:0] (Unit: 16x sclk)" } } #[cite: 39]
+
+  # --- 6.11 Black Level Calibration (BLC) Control ---
+  0x4000:
+    name: "BLC_CTRL_00" #[cite: 40]
+    default: 0xC1 #[cite: 40]
+    rw: "RW" #[cite: 40]
+    fields:
+      "7:4": "Avg_weight" #[cite: 40]
+      "3": "Target adjust disable (0: Enable offset to adjust target, 1: Disable)" #[cite: 40]
+      "2": "Compensation enable due to gain change (0: Enable, 1: Disable)" #[cite: 40]
+      "1": "Dither_en 1-bit dithering (0: Enable, 1: Disable)" #[cite: 40]
+      "0": "Median_en filter function enable" #[cite: 40]
+  0x4001:
+    name: "BLC_CTRL_01" #[cite: 40]
+    default: 0xE0 #[cite: 40]
+    rw: "RW" #[cite: 40]
+    fields:
+      "7": "gain_trig_beh" #[cite: 40]
+      "6": "format_trig_beh" #[cite: 40]
+      "5": "Kcoef manual enable" #[cite: 40]
+      "4": "Offset manual enable (0: Auto mode, 1: Manual mode)" #[cite: 29, 40]
+      "3": "Zero line out enable" #[cite: 40]
+      "2": "Black line out enable" #[cite: 40]
+      "1:0": "Bypass mode" #[cite: 40]
+  0x4002: { name: "BLC_CTRL_02", default: 0x00, rw: "RW", fields: { "7:2": "Debug mode", "1:0": "Blacklevel target[9:8]" } } #[cite: 40]
+  0x4003: { name: "BLC_CTRL_03", default: 0x10, rw: "RW", fields: { "7:0": "Blacklevel target[7:0]" } } #[cite: 41]
+  0x4004: { name: "BLC_CTRL_04", default: 0x00, rw: "RW", fields: { "2:0": "Horizontal win start[10:8]" } } #[cite: 41]
+  0x4005: { name: "BLC_CTRL_05", default: 0x02, rw: "RW", fields: { "7:0": "Horizontal win start[7:0]" } } #[cite: 41]
+  0x4006: { name: "BLC_CTRL_06", default: 0x00, rw: "RW", fields: { "2:0": "Horizontal win pad[10:8]" } } #[cite: 41]
+  0x4007: { name: "BLC_CTRL_07", default: 0x02, rw: "RW", fields: { "7:0": "Horizontal win pad[7:0]" } } #[cite: 41]
+  0x4008: { name: "BLC_CTRL_08", default: 0x00, rw: "RW", fields: { "7:0": "Black line start line" } } #[cite: 41]
+  0x4009: { name: "BLC_CTRL_09", default: 0x0B, rw: "RW", fields: { "7:0": "Black line end line" } } #[cite: 41]
+  0x400A: { name: "BLC_CTRL_0A", default: 0x02, rw: "RW", fields: { "7:0": "Offset trigger threshold[15:8]" } } #[cite: 41]
+  0x400B: { name: "BLC_CTRL_0B", default: 0x00, rw: "RW", fields: { "7:0": "Offset trigger threshold[7:0]" } } #[cite: 41]
+  0x400C: { name: "BLC_CTRL_0C", default: 0x00, rw: "RW", fields: { "7:0": "CVDN black lines start" } } #[cite: 41]
+  0x400D: { name: "BLC_CTRL_0D", default: 0x00, rw: "RW", fields: { "7:0": "CVDN black lines end" } } #[cite: 41]
+  0x400E: { name: "BLC_CTRL_0E", default: 0x00, rw: "RW", fields: { "1:0": "Kcoef man value[9:8]" } } #[cite: 41]
+  0x400F: { name: "BLC_CTRL_0F", default: 0x80, rw: "RW", fields: { "7:0": "Kcoef man value[7:0]" } } #[cite: 41]
+  0x4010:
+    name: "BLC_CTRL_10" #[cite: 41]
+    default: 0xF0 #[cite: 41]
+    rw: "RW" #[cite: 41]
+    fields:
+      "7": "Offset trigger enable" #[cite: 41]
+      "6": "Gain change trigger enable" #[cite: 41]
+      "5": "Format change trigger enable" #[cite: 41]
+      "4": "Reset trigger enable" #[cite: 41]
+      "3": "Manual average enable" #[cite: 41]
+      "2": "Manual trigger" #[cite: 41]
+      "1": "Freeze enable" #[cite: 41]
+      "0": "Offset always update" #[cite: 41]
+  0x4011:
+    name: "BLC_CTRL_11" #[cite: 41]
+    default: 0xFF #[cite: 41]
+    rw: "RW" #[cite: 41]
+    fields:
+      "7": "Debug mode" #[cite: 41]
+      "6": "Offset trigger multiframe enable" #[cite: 41]
+      "5": "Format trigger multiframe enable" #[cite: 41]
+      "4": "Gain trigger multiframe enable" #[cite: 41]
+      "3": "Reset trigger multiframe enable" #[cite: 41]
+      "2": "Offset trigger multiframe mode" #[cite: 41]
+      "1": "Format trigger multiframe mode" #[cite: 41]
+      "0": "Gain trigger multiframe mode" #[cite: 41]
+  0x4012: { name: "BLC_CTRL_12", default: 0x08, rw: "RW", fields: { "5:0": "Reset trigger frame number" } } #[cite: 41]
+  0x4013: { name: "BLC_CTRL_13", default: 0x02, rw: "RW", fields: { "5:0": "Format trigger frame number" } } #[cite: 41]
+  0x4014: { name: "BLC_CTRL_14", default: 0x02, rw: "RW", fields: { "5:0": "Gain trigger frame number" } } #[cite: 41]
+  0x4015: { name: "BLC_CTRL_15", default: 0x02, rw: "RW", fields: { "5:0": "Offset trigger frame number" } } #[cite: 42]
+  0x4016: { name: "BLC_CTRL_16", default: 0x00, rw: "RW", fields: { "1:0": "Offset trigger threshold[9:8]" } } #[cite: 42]
+  0x4017: { name: "BLC_CTRL_17", default: 0x10, rw: "RW", fields: { "7:0": "Offset trigger threshold[7:0]" } } #[cite: 42]
+  "0x4020..0x402F":
+    name: "BLC_OFFSET_COMPENSATION_TH_K" #[cite: 42]
+    default: 0x00 #[cite: 42]
+    rw: "RW" #[cite: 42]
+    description: "Even addresses (0x4020..0x402E) = Offset compensation th000..th111[5:0]; Odd addresses (0x4021..0x402F) = Offset compensation k000..k111[5:0]" #[cite: 42]
+  "0x4030..0x403F":
+    name: "BLC_OFFSET_MAN_000_111" #[cite: 43]
+    default: 0x00 #[cite: 43]
+    rw: "RW" #[cite: 43]
+    description: "10-bit manual BLC offsets 000..111 (Even addresses bits[1:0] = [9:8], Odd addresses bits[7:0] = [7:0])" #[cite: 43]
+  0x4040: { name: "BLC_CTRL_40", default: 0x00, rw: "RW", fields: { "1:0": "r_rnd_gain_th[9:8]" } } #[cite: 43]
+  0x4041: { name: "BLC_CTRL_41", default: 0x00, rw: "RW", fields: { "7:0": "r_rnd_gain_th[7:0]" } } #[cite: 43]
+  "0x4050..0x405D":
+    name: "BLC_OFFSET_READBACK_000_110" #[cite: 43, 44]
+    default: null
+    rw: "R" #[cite: 43, 44]
+    description: "10-bit read-only active BLC offsets blc_offset000..blc_offset110" #[cite: 43, 44]
+
+  # --- 6.12 Frame Control & Frame Counter ---
+  0x4201: { name: "FC_CTRL1", default: 0x00, rw: "RW", fields: { "3:0": "Number of frame on" } } #[cite: 44]
+  0x4202: { name: "FC_CTRL2", default: 0x00, rw: "RW", fields: { "3:0": "Number of frame off" } } #[cite: 44]
+  0x4A00: { name: "FRAME_COUNT", default: null, rw: "R", fields: { "7:0": "Frame counter value (0-255)" } } #[cite: 33]
+
+  # --- 6.13 MIPI CSI-2 Control ---
+  0x4800:
+    name: "MIPI_CTRL00" #[cite: 45]
+    default: 0x04 #[cite: 45]
+    rw: "RW" #[cite: 45]
+    fields:
+      "7:6": "Debug mode" #[cite: 45]
+      "5": "gate_sc_en (0: Clock lane is free running, 1: Gate clock lane when no packet to TX)" #[cite: 45]
+      "4": "line_sync_en (0: Do not send line short packet for each line, 1: Send line short packet)" #[cite: 45]
+      "2": "pclk_inv_o (0: Falling edge of mipi_pclk_o, 1: Rising edge)" #[cite: 45]
+      "1": "first_bit (0: Output 0x55, 1: Output 0xAA)" #[cite: 45]
+      "0": "LPX_select for pclk domain (0: Auto calculate t_lpx_p, 1: Use lpx_p_min[7:0])" #[cite: 45]
+  0x4801: { name: "MIPI_RSVD_01", rw: "RSVD" } #[cite: 45]
+  0x4802:
+    name: "MIPI_CTRL02" #[cite: 46]
+    default: 0x00 #[cite: 46]
+    rw: "RW" #[cite: 46]
+    fields:
+      "7": "hs_prepare_sel (0: Auto calculate, 1: Use hs_prepare_min_o[7:0])" #[cite: 46]
+      "6": "clk_prepare_sel (0: Auto calculate, 1: Use clk_prepare_min_o[7:0])" #[cite: 46]
+      "5": "clk_post_sel (0: Auto calculate, 1: Use clk_post_min_o[7:0])" #[cite: 46]
+      "4": "clk_trail_sel (0: Auto calculate, 1: Use clk_trail_min_o[7:0])" #[cite: 46]
+      "3": "hs_exit_sel (0: Auto calculate, 1: Use hs_exit_min_o[7:0])" #[cite: 46]
+      "2": "hs_zero_sel (0: Auto calculate, 1: Use hs_zero_min_o[7:0])" #[cite: 46]
+      "1": "hs_trail_sel (0: Auto calculate, 1: Use hs_trail_min_o[7:0])" #[cite: 46]
+      "0": "clk_zero_sel (0: Auto calculate, 1: Use clk_zero_min_o[7:0])" #[cite: 46]
+  0x4803:
+    name: "MIPI_CTRL03" #[cite: 46]
+    default: 0x10 #[cite: 46]
+    rw: "RW" #[cite: 46]
+    fields:
+      "4": "fifo_rd_spd_o" #[cite: 46]
+      "3": "manu_ofset_o (t_period manual offset SMIA)" #[cite: 46]
+      "2": "r_manu_half2one (t_period half to 1 SMIA)" #[cite: 46]
+  0x4804: { name: "MIPI_RSVD_04", rw: "RSVD" } #[cite: 46]
+  0x4805:
+    name: "MIPI_CTRL05" #[cite: 46]
+    default: 0x00 #[cite: 46]
+    rw: "RW" #[cite: 46]
+    fields:
+      "3": "lpda_retim_manu_o" #[cite: 46]
+      "2": "lpda_retim_sel_o (1: Manual)" #[cite: 46]
+      "1": "lpck_retim_manu_o" #[cite: 46]
+      "0": "lpck_retim_sel_o (1: Manual)" #[cite: 46]
+  0x4806:
+    name: "MIPI_CTRL06" #[cite: 47]
+    default: 0x00 #[cite: 47]
+    rw: "RW" #[cite: 47]
+    fields:
+      "4": "pu_mark_en_o (Power up mark1 enable)" #[cite: 47]
+      "3": "mipi_remot_rst" #[cite: 47]
+      "2": "mipi_susp" #[cite: 47]
+      "1": "smia_lane_ch_en" #[cite: 47]
+      "0": "tx_lsb_first (0: High bit first, 1: Low power transmit low bit first)" #[cite: 47]
+  0x4807: { name: "MIPI_CTRL07", default: 0x03, rw: "RW", fields: { "3:0": "sw_t_lpx (ul_tx T_lpx)" } } #[cite: 47]
+  0x4808: { name: "MIPI_CTRL08", default: 0x18, rw: "RW", fields: { "7:0": "wkup_dly (Mark1 wakeup delay / 2^10)" } } #[cite: 47]
+  0x4810: { name: "FCNT_MAX_HIGH", default: 0xFF, rw: "RW", fields: { "7:0": "fcnt_max[15:8]" } } #[cite: 47]
+  0x4811: { name: "FCNT_MAX_LOW",  default: 0xFF, rw: "RW", fields: { "7:0": "fcnt_max[7:0]" } } #[cite: 47]
+  0x4812: { name: "MIPI_RSVD_12", rw: "RSVD" } #[cite: 47]
+  0x4813: { name: "MIPI_CTRL13", default: 0x00, rw: "RW", fields: { "2": "vc_sel (Input VC or register VC)", "1:0": "Virtual channel ID" } } #[cite: 47]
+  0x4814: { name: "MIPI_CTRL14", default: 0x2A, rw: "RW", fields: { "6": "lpkt_dt_sel", "5:0": "dt_man (Manual MIPI data type)" } } #[cite: 47]
+  0x4815: { name: "MIPI_RSVD_15", rw: "RSVD" } #[cite: 47]
+  0x4816: { name: "EMB_DT_CTRL", default: null, rw: "R", fields: { "6": "emb_line_sel", "5:0": "emb_dt (Manual embedded data type)" } } #[cite: 47]
+  0x4817: { name: "MIPI_RSVD_17", rw: "RSVD" } #[cite: 47]
+  0x4818: { name: "HS_ZERO_MIN_HIGH",  default: 0x00, rw: "RW", fields: { "1:0": "hs_zero_min[9:8] (unit: ns)" } } #[cite: 48]
+  0x4819: { name: "HS_ZERO_MIN_LOW",   default: 0x70, rw: "RW", fields: { "7:0": "hs_zero_min[7:0] (unit: ns)" } } #[cite: 48]
+  0x481A: { name: "HS_TRAIL_MIN_HIGH", default: 0x00, rw: "RW", fields: { "1:0": "hs_trail_min[9:8] (unit: ns)" } } #[cite: 48]
+  0x481B: { name: "HS_TRAIL_MIN_LOW",  default: 0x3C, rw: "RW", fields: { "7:0": "hs_trail_min[7:0] (unit: ns)" } } #[cite: 48]
+  0x481C: { name: "CLK_ZERO_MIN_HIGH", default: 0x00, rw: "RW", fields: { "1:0": "clk_zero_min[9:8] (unit: ns)" } } #[cite: 48]
+  0x481D: { name: "CLK_ZERO_MIN_LOW",  default: 0x2C, rw: "RW", fields: { "7:0": "clk_zero_min[7:0] (unit: ns)" } } #[cite: 48]
+  0x481E: { name: "CLK_PREPARE_MAX",   default: 0x5F, rw: "RW", fields: { "7:0": "clk_prepare_max[7:0] (unit: ns)" } } #[cite: 48]
+  0x481F: { name: "CLK_PREPARE_MIN",   default: 0x26, rw: "RW", fields: { "7:0": "clk_prepare_min[7:0] (unit: ns)" } } #[cite: 48]
+  0x4820: { name: "CLK_POST_MIN_HIGH", default: 0x00, rw: "RW", fields: { "1:0": "clk_post_min[9:8] (unit: ns)" } } #[cite: 48]
+  0x4821: { name: "CLK_POST_MIN_LOW",  default: 0x3C, rw: "RW", fields: { "7:0": "clk_post_min[7:0] (unit: ns)" } } #[cite: 48]
+  0x4822: { name: "CLK_TRAIL_MIN_HIGH", default: 0x00, rw: "RW", fields: { "1:0": "clk_trail_min[9:8] (unit: ns)" } } #[cite: 49]
+  0x4823: { name: "CLK_TRAIL_MIN_LOW",  default: 0x3C, rw: "RW", fields: { "7:0": "clk_trail_min[7:0] (unit: ns)" } } #[cite: 49]
+  0x4824: { name: "LPX_P_MIN_HIGH",    default: 0x00, rw: "RW", fields: { "1:0": "lpx_p_min[9:8] (unit: ns)" } } #[cite: 49]
+  0x4825: { name: "LPX_P_MIN_LOW",     default: 0x32, rw: "RW", fields: { "7:0": "lpx_p_min[7:0] (unit: ns)" } } #[cite: 49]
+  0x4826: { name: "HS_PREPARE_MIN",    default: 0x32, rw: "RW", fields: { "7:0": "hs_prepare_min[7:0] (unit: ns)" } } #[cite: 49]
+  0x4827: { name: "HS_PREPARE_MAX",    default: 0x55, rw: "RW", fields: { "7:0": "hs_prepare_max[7:0] (unit: ns)" } } #[cite: 49]
+  0x4828: { name: "HS_EXIT_MIN_HIGH",  default: 0x00, rw: "RW", fields: { "1:0": "hs_exit_min[9:8] (unit: ns)" } } #[cite: 49]
+  0x4829: { name: "HS_EXIT_MIN_LOW",   default: 0x64, rw: "RW", fields: { "7:0": "hs_exit_min[7:0] (unit: ns)" } } #[cite: 49]
+  0x482A: { name: "UI_HS_ZERO_MIN",    default: 0x06, rw: "RW", fields: { "5:0": "Minimum UI value of hs_zero (unit: UI)" } } #[cite: 49]
+  0x482B: { name: "UI_HS_TRAIL_MIN",   default: 0x04, rw: "RW", fields: { "5:0": "Minimum UI value of hs_trail (unit: UI)" } } #[cite: 49]
+  0x482C: { name: "UI_CLK_ZERO_MIN",   default: 0x00, rw: "RW", fields: { "5:0": "Minimum UI value of clk_zero (unit: UI)" } } #[cite: 49]
+  0x482D: { name: "UI_CLK_PREPARE",    default: 0x00, rw: "RW", fields: { "7:4": "ui_clk_prepare_max (UI)", "3:0": "ui_clk_prepare_min (UI)" } } #[cite: 50]
+  0x482E: { name: "UI_CLK_POST_MIN",   default: 0x34, rw: "RW", fields: { "5:0": "ui_clk_post_min[5:0] (unit: UI)" } } #[cite: 50]
+  0x482F: { name: "UI_CLK_TRAIL_MIN",  default: 0x00, rw: "RW", fields: { "5:0": "ui_clk_trail_min[5:0] (unit: UI)" } } #[cite: 50]
+  0x4830: { name: "UI_LPX_P_MIN",      default: 0x00, rw: "RW", fields: { "5:0": "ui_lpx_p_min[5:0] (unit: UI)" } } #[cite: 50]
+  0x4831: { name: "UI_HS_PREPARE",     default: 0x64, rw: "RW", fields: { "7:4": "ui_hs_prepare_max (UI)", "3:0": "ui_hs_prepare_min (UI)" } } #[cite: 50]
+  0x4832: { name: "UI_HS_EXIT_MIN",    default: 0x00, rw: "RW", fields: { "5:0": "ui_hs_exit_min[5:0] (unit: UI)" } } #[cite: 50]
+  0x4833: { name: "MIPI_PKT_STAR_SIZE", default: 0x08, rw: "RW", fields: { "5:0": "mipi_pkt_star_size[5:0]" } } #[cite: 50]
+  "0x4834..0x4836": { name: "MIPI_RSVD_34_36", rw: "RSVD" } #[cite: 50]
+  0x4837: { name: "PCLK_PERIOD",       default: 0x2D, rw: "RW", fields: { "7:0": "Period of pclk2x (pclk_div=1, 1-bit decimal)" } } #[cite: 50]
+  0x4838: { name: "MIPI_LP_GPIO0",     default: 0x00, rw: "RW", fields: { "7": "lp_sel0", "6": "lp_dir_man0", "5": "lp_p0_o", "4": "lp_n0_o", "3": "lp_sel1", "2": "lp_dir_man1" } } #[cite: 51]
+  0x4839: { name: "MIPI_LP_GPIO1",     default: 0x00, rw: "RW", fields: { "4": "lp_n2_o", "3": "lp_sel3", "2": "lp_dir_man3", "1": "lp_p3_o", "0": "lp_n3_o" } } #[cite: 51]
+  "0x483A..0x483B": { name: "MIPI_RSVD_3A_3B", rw: "RSVD" } #[cite: 51]
+  0x483C: { name: "MIPI_CTRL3C",       default: 0x02, rw: "RW", fields: { "3:0": "t_clk_pre (unit: pclk2x cycle)" } } #[cite: 51]
+  0x483D: { name: "MIPI_LP_GPIO4",     default: 0x00, rw: "RW", fields: { "7": "lp_ck_sel0", "6": "lp_ck_dir_man0", "5": "lp_ck_p0_o", "4": "lp_ck_n0_o", "3": "lp_ck_sel1", "2": "lp_ck_dir_man1", "1": "lp_ck_p1_o", "0": "lp_ck_n1_o" } } #[cite: 52]
+  0x484A: { name: "MIPI_SLP_MAN",      default: 0x3F, rw: "RW", fields: { "5": "slp_lp_pon_man_o", "4": "slp_lp_pon_da", "3": "slp_lp_pon_ck", "2": "mipi_slp_man_st", "1": "clk_lane_state", "0": "data_lane_state" } } #[cite: 52]
+  0x484B: { name: "SMIA_OPTION",       default: 0x07, rw: "RW", fields: { "1": "clk_start_sel_o (0: After SOF, 1: After reset)", "0": "sof_sel_o (0: After HREF, 1: After SOF)" } } #[cite: 52]
+  0x484C: { name: "SEL_MIPI_CTRL4C",   default: 0x00, rw: "RW", fields: { "3": "smia_fcnt_i select", "2": "prbs_enable", "1": "hs_test_only", "0": "set_frame_cnt_0" } } #[cite: 52]
+  0x484D: { name: "TEST_PATTEN_DATA",  default: 0xB6, rw: "RW", fields: { "7:0": "Data lane test pattern register" } } #[cite: 52]
+  0x484E: { name: "FE_DLY",            default: 0x10, rw: "RW", fields: { "7:0": "r_fe_dly_o (Last packet to frame end delay / 2)" } } #[cite: 52]
+  0x484F: { name: "TEST_PATTEN_CK_DATA", default: 0x55, rw: "RW", fields: { "7:0": "clk_test_patten_reg" } } #[cite: 53]
+
+  # --- 5.1, 6.14, 6.15 ISP & Pre-ISP Control ---
+  0x5000:
+    name: "ISP_CTRL00" #[cite: 31, 53]
+    default: 0x2F #[cite: 31, 53]
+    rw: "RW" #[cite: 31, 53]
+    fields:
+      "7": "Debug mode" #[cite: 53]
+      "6": "pre_isp_man_en" #[cite: 31, 53]
+      "5": "Reserved / Debug mode" #[cite: 31, 53, 69]
+      "4": "awb_gain_en (0: Disable, 1: Enable)" #[cite: 31, 53]
+      "3": "bc_en (Black defect pixel cancel: 0: Disable, 1: Enable)" #[cite: 31, 53]
+      "2": "wc_en (White defect pixel cancel: 0: Disable, 1: Enable)" #[cite: 31, 53]
+      "1": "dcblc_en (0: Disable, 1: Enable)" #[cite: 31, 53]
+      "0": "blc_en (Black level calibration: 0: Disable, 1: Enable)" #[cite: 29, 31, 53]
+  0x5001:
+    name: "ISP_CTRL01" #[cite: 31, 53]
+    default: 0x20 #[cite: 31, 53]
+    rw: "RW" #[cite: 31, 53]
+    fields:
+      "6": "sof_sel" #[cite: 31, 53]
+      "5": "eof_sel1" #[cite: 31, 53]
+      "4": "eof_sel0" #[cite: 31, 53]
+      "3": "awb_out_sel" #[cite: 31, 53]
+      "2": "pre_out_sel" #[cite: 31, 53]
+      "1": "blc_out_sel" #[cite: 31, 53]
+      "0": "byp_isp_sel" #[cite: 31, 53]
+  0x5002: { name: "ISP_CTRL02", default: 0x10, rw: "RW", fields: { "4": "bias_plus", "3": "bias_man_en", "2": "blkv_in", "1": "imgv_in", "0": "no_latch" } } #[cite: 31, 53]
+  0x5003: { name: "ISP_CTRL03", default: 0x10, rw: "RW", fields: { "7:0": "bias_man[7:0]" } } #[cite: 31, 53]
+  0x5004: { name: "ISP_CTRL4",  default: 0x01, rw: "RW", fields: { "7": "size_man_en", "6:4": "win_y_offset_adjust" } } #[cite: 31, 53]
+  0x5006: { name: "ISP_CTRL06", default: 0x00, rw: "RW", fields: { "7:0": "Manual horizontal size[15:8]" } } #[cite: 31, 53]
+  0x5007: { name: "ISP_CTRL07", default: 0x00, rw: "RW", fields: { "7:0": "Manual horizontal size[7:0]" } } #[cite: 31, 53]
+  0x5008: { name: "ISP_CTRL08", default: 0x00, rw: "RW", fields: { "7:0": "Manual vertical size[15:8]" } } #[cite: 31, 53]
+  0x5009: { name: "ISP_CTRL09", default: 0x00, rw: "RW", fields: { "7:0": "Manual vertical size[7:0]" } } #[cite: 31, 53]
+  0x500B: { name: "DPC_SRAM_TEST", default: 0x02, rw: "RW", fields: { "5": "dpc_sram_test1", "4": "dpc_sram_rme", "3:0": "dpc_sram_rm" } } #[cite: 31, 54]
+  0x500C: { name: "MANUAL_X_START_HIGH", default: 0x00, rw: "RW", fields: { "3:0": "pre_isp manual x_start_address[11:8]" } } #[cite: 54]
+  0x500D: { name: "MANUAL_X_START_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "pre_isp manual x_start_address[7:0]" } } #[cite: 54]
+  0x500E: { name: "MANUAL_X_END_HIGH",   default: 0x00, rw: "RW", fields: { "3:0": "pre_isp manual x_end_address[11:8]" } } #[cite: 54]
+  0x500F: { name: "MANUAL_X_END_LOW",    default: 0x00, rw: "RW", fields: { "7:0": "pre_isp manual x_end_address[7:0]" } } #[cite: 54]
+  0x5010: { name: "MANUAL_Y_START_HIGH", default: 0x00, rw: "RW", fields: { "3:0": "pre_isp manual y_start_address[11:8]" } } #[cite: 54]
+  0x5011: { name: "MANUAL_Y_START_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "pre_isp manual y_start_address[7:0]" } } #[cite: 54]
+  0x5012: { name: "MANUAL_Y_END_HIGH",   default: 0x00, rw: "RW", fields: { "3:0": "pre_isp manual y_end_address[11:8]" } } #[cite: 54]
+  0x5013: { name: "MANUAL_Y_END_LOW",    default: 0x00, rw: "RW", fields: { "7:0": "pre_isp manual y_end_address[7:0]" } } #[cite: 54]
+  0x5014: { name: "MANUAL_X_OUTPUT_SIZE_HIGH", default: 0x00, rw: "RW", fields: { "3:0": "pre_isp manual x_output_size[11:8]" } } #[cite: 54]
+  0x5015: { name: "MANUAL_X_OUTPUT_SIZE_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "pre_isp manual x_output_size[7:0]" } } #[cite: 54]
+  0x5016: { name: "MANUAL_Y_OUTPUT_SIZE_HIGH", default: 0x00, rw: "RW", fields: { "3:0": "pre_isp manual y_output_size[11:8]" } } #[cite: 54]
+  0x5017: { name: "MANUAL_Y_OUTPUT_SIZE_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "pre_isp manual y_output_size[7:0]" } } #[cite: 54]
+  0x5080:
+    name: "PRE_ISP_CTRL0" #[cite: 28, 55]
+    default: 0x00 #[cite: 28, 55]
+    rw: "RW" #[cite: 28, 55]
+    fields:
+      "7": "Test pattern enable (0: Disable, 1: Enable)" #[cite: 28, 55]
+      "6:4": "Reserved" #[cite: 55]
+      "3:2": "color_bar_style (00: Standard, 01: Top-bottom darker, 10: Right-left darker, 11: Bottom-top darker)" #[cite: 28, 55]
+      "1:0": "Reserved" #[cite: 55]
+
+  # --- 6.16 Manual White Balance (MWB) Control ---
+  0x5180: { name: "MWB_R_GAIN_HIGH", default: 0x04, rw: "RW", fields: { "3:0": "mwb_r_gain[11:8] (0x100 = 1x, 0x3FF = ~4x)" } } #[cite: 55]
+  0x5181: { name: "MWB_R_GAIN_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "mwb_r_gain[7:0]" } } #[cite: 55]
+  0x5182: { name: "MWB_G_GAIN_HIGH", default: 0x04, rw: "RW", fields: { "3:0": "mwb_g_gain[11:8]" } } #[cite: 55]
+  0x5183: { name: "MWB_G_GAIN_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "mwb_g_gain[7:0]" } } #[cite: 55]
+  0x5184: { name: "MWB_B_GAIN_HIGH", default: 0x04, rw: "RW", fields: { "3:0": "mwb_b_gain[11:8]" } } #[cite: 55]
+  0x5185: { name: "MWB_B_GAIN_LOW",  default: 0x00, rw: "RW", fields: { "7:0": "mwb_b_gain[7:0]" } } #[cite: 55]
+
+  # --- 6.17 Window Cut (WINC) Control ---
+  0x5700: { name: "WINC_CTRL00", default: 0x00, rw: "RW", fields: { "4:0": "x_start_offset[12:8]" } } #[cite: 56]
+  0x5701: { name: "WINC_CTRL01", default: 0x00, rw: "RW", fields: { "7:0": "x_start_offset[7:0]" } } #[cite: 56]
+  0x5702: { name: "WINC_CTRL02", default: 0x00, rw: "RW", fields: { "4:0": "y_start_offset[12:8]" } } #[cite: 56]
+  0x5703: { name: "WINC_CTRL03", default: 0x00, rw: "RW", fields: { "7:0": "y_start_offset[7:0]" } } #[cite: 56]
+  0x5704: { name: "WINC_CTRL04", default: 0x02, rw: "RW", fields: { "4:0": "window_width[12:8]" } } #[cite: 56]
+  0x5705: { name: "WINC_CTRL05", default: 0x80, rw: "RW", fields: { "7:0": "window_width[7:0] (Default 0x0280 = 640)" } } #[cite: 56]
+  0x5706: { name: "WINC_CTRL06", default: 0x01, rw: "RW", fields: { "3:0": "window_height[11:8]" } } #[cite: 56]
+  0x5707: { name: "WINC_CTRL07", default: 0xE0, rw: "RW", fields: { "7:0": "window_height[7:0] (Default 0x01E0 = 480)" } } #[cite: 56]
+  0x5708: { name: "WINC_CTRL08", default: 0x00, rw: "RW", fields: { "2": "flip_offset_en", "1": "Window enable option", "0": "Manual window enable" } } #[cite: 56]
+  0x5709: { name: "WINC_RO09",   default: null, rw: "R",  fields: { "3:0": "Pixel count[11:8] for debug" } } #[cite: 56]
+  0x570A: { name: "WINC_RO0A",   default: null, rw: "R",  fields: { "7:0": "Pixel count[7:0] for debug" } } #[cite: 56]
+  0x570B: { name: "WINC_RO0B",   default: null, rw: "R",  fields: { "3:0": "Line count[11:8] for debug" } } #[cite: 56]
+  0x570C: { name: "WINC_RO0C",   default: null, rw: "R",  fields: { "7:0": "Line count[7:0] for debug" } } #[cite: 56]
+
+  # --- 6.18 Defect Pixel Correction (DPC) Control ---
+  0x5780:
+    name: "DPC_CTRL00" #[cite: 57]
+    default: 0x14 #[cite: 57]
+    rw: "RW" #[cite: 57]
+    fields:
+      "5": "enable_tail" #[cite: 57]
+      "4": "enable_3x3_cluster" #[cite: 57]
+      "3": "enable_saturate_crosscluster" #[cite: 57]
+      "2": "enable_crosscluster" #[cite: 57]
+      "1": "enable_general_tail" #[cite: 57]
+      "0": "manual_mode_en" #[cite: 57]
+  0x5781:
+    name: "DPC_CTRL01" #[cite: 57]
+    default: 0x0F #[cite: 57]
+    rw: "RW" #[cite: 57]
+    fields:
+      "7:4": "Saturate" #[cite: 57]
+      "3": "enable_diffchannel_wpconn" #[cite: 57]
+      "2": "enable_samechannel_bpconn" #[cite: 57]
+      "1": "enable_diffchannel_bpconn" #[cite: 57]
+      "0": "enable_samechannel_wpconn" #[cite: 57]
+  0x5782: { name: "DPC_CTRL02",    default: 0x44, rw: "RW", fields: { "7:4": "status_thre_step", "3:0": "wthre_list0" } } #[cite: 57]
+  0x5783: { name: "WTHRE_LIST1",   default: 0x02, rw: "RW", fields: { "3:0": "wthre_list1[3:0]" } } #[cite: 57]
+  0x5784: { name: "WTHRE_LIST2",   default: 0x01, rw: "RW", fields: { "3:0": "wthre_list2[3:0]" } } #[cite: 57]
+  0x5785: { name: "WTHRE_LIST3",   default: 0x01, rw: "RW", fields: { "3:0": "wthre_list3[3:0]" } } #[cite: 57]
+  0x5786: { name: "ADPT_PTN_THRE", default: 0x00, rw: "RW", fields: { "3:0": "adptive_pattern_thre[3:0]" } } #[cite: 57]
+  0x5787: { name: "ADPT_PTN_STEP", default: 0x04, rw: "RW", fields: { "3:0": "adptive_pattern_step[3:0]" } } #[cite: 57]
+  0x5788: { name: "CON_THRE",      default: 0x08, rw: "RW", fields: { "3:0": "more_connection_case_thre[3:0]" } } #[cite: 57]
+  0x5789: { name: "DPC_LVL_LIST0", default: 0x0F, rw: "RW", fields: { "7:0": "dpc_level_list0[7:0]" } } #[cite: 57]
+  0x578A: { name: "DPC_LVL_LIST1", default: 0xFD, rw: "RW", fields: { "7:0": "dpc_level_list1[7:0]" } } #[cite: 57]
+  0x578B: { name: "DPC_LVL_LIST2", default: 0xF5, rw: "RW", fields: { "7:0": "dpc_level_list2[7:0]" } } #[cite: 57]
+  0x578C: { name: "DPC_LVL_LIST3", default: 0xF5, rw: "RW", fields: { "7:0": "dpc_level_list3[7:0]" } } #[cite: 57]
+  0x578D: { name: "GAIN_LIST0",    default: 0x03, rw: "RW", fields: { "6:0": "gain_list0[6:0]" } } #[cite: 57]
+  0x578E: { name: "GAIN_LIST1",    default: 0x0F, rw: "RW", fields: { "6:0": "gain_list1[6:0]" } } #[cite: 57]
+  0x578F: { name: "GAIN_LIST2",    default: 0x3F, rw: "RW", fields: { "6:0": "gain_list2[6:0]" } } #[cite: 58]
+  0x5790: { name: "MATCH_THRE",    default: 0x08, rw: "RW", fields: { "3:0": "matching_threshold[3:0]" } } #[cite: 58]
+  0x5791: { name: "STATUS_THRE",   default: 0x04, rw: "RW", fields: { "3:0": "status_threshold[3:0]" } } #[cite: 58]
+  0x5792: { name: "THRE_RATIO",    default: 0x04, rw: "RW", fields: { "3:0": "threshold_ratio[3:0]" } } #[cite: 58]
+  0x5793: { name: "DPC_CTRL13",    default: 0x52, rw: "RW", fields: { "7:6": "vnum_list1", "5:4": "vnum_list0", "1": "v153_en", "0": "clip_intg_en" } } #[cite: 58]
+  0x5794: { name: "DPC_CTRL14",    default: 0xA3, rw: "RW", fields: { "7:6": "vnum_list3", "5:4": "vnum_list2", "1:0": "edge_option" } } #[cite: 58]
+  0x5797: { name: "DPC_BTHRE",     default: null, rw: "R",  fields: { "6:0": "black_threshold[6:0]" } } #[cite: 58]
+  0x5798: { name: "DPC_WTHRE",     default: null, rw: "R",  fields: { "4:0": "white_threshold[4:0]" } } #[cite: 58]
+  0x5799: { name: "DPC_THRE1",     default: null, rw: "R",  fields: { "4:0": "Threshold1[4:0]" } } #[cite: 58]
+  0x579A: { name: "DPC_THRE2",     default: null, rw: "R",  fields: { "4:0": "Threshold2[4:0]" } } #[cite: 58]
+  0x579B: { name: "DPC_THRE3",     default: null, rw: "R",  fields: { "4:0": "Threshold3[4:0]" } } #[cite: 58]
+  0x579C: { name: "DPC_THRE4",     default: null, rw: "R",  fields: { "4:0": "Threshold4[4:0]" } } #[cite: 58]
+  0x579D: { name: "DPC_LEVEL",     default: null, rw: "R",  fields: { "3:0": "Level[3:0]" } } #[cite: 58]

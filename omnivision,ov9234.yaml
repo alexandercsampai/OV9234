@@ -1,0 +1,135 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/media/i2c/omnivision,ov9234.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: OmniVision OV9234 Monochrome / IR 720p CMOS Image Sensor
+
+maintainers:
+  - Embedded Camera Subsystem Engineering <linux-media@vger.kernel.org>
+
+description: |
+  The OmniVision OV9234 is a 1280x720 (720p) monochrome / infrared PureCel
+  rolling-shutter CMOS image sensor with 1.4 um x 1.4 um pixels (1819.58 um x
+  1033.34 um active image area) packaged in a 16-pin CSP (2532 um x 1722 um
+  typical body dimensions)[cite: 1]. It is controlled over a 2-wire SCCB
+  (I2C-compatible) bus at 7-bit address 0x36 (SID pin low) or 0x10 (SID pin
+  high), and outputs 8-bit or 10-bit monochrome RAW frames over a 1-lane MIPI
+  CSI-2 D-PHY interface up to 480 Mbps (360 Mbps typical)[cite: 1].
+
+allOf:
+  - $ref: /schemas/media/video-interface-devices.yaml#
+
+properties:
+  compatible:
+    const: omnivision,ov9234
+
+  reg:
+    enum:
+      - 0x36 # SID pin pulled low (8-bit 0x6C write / 0x6D read)[cite: 1]
+      - 0x10 # SID pin pulled high (8-bit 0x20 write / 0x21 read)[cite: 1]
+    description:
+      7-bit I2C slave address selected by hardware strapping on Pin A4 (SID)[cite: 1].
+
+  clocks:
+    maxItems: 1
+    description:
+      Reference to the system master input clock (XVCLK on Pin D1, 6 MHz to
+      27 MHz, 24 MHz typical)[cite: 1].
+
+  clock-names:
+    items:
+      - const: xvclk
+
+  avdd-supply:
+    description:
+      Analog power supply on Pin C2 (2.6 V to 3.0 V, 2.8 V typical)[cite: 1].
+
+  dovdd-supply:
+    description:
+      Digital I/O power supply on Pin D7 (1.7 V to 1.9 V, 1.8 V typical)[cite: 1].
+
+  dvdd-supply:
+    description:
+      Digital core power supply on Pin C8 (1.14 V to 1.26 V, 1.2 V typical;
+      must be provided externally and sequenced after AVDD and DOVDD)[cite: 1].
+
+  reset-gpios:
+    maxItems: 1
+    description:
+      Reference to the hardware reset and power-down pin (XSHUTDN on Pin B3,
+      active low with internal pull-down resistor)[cite: 1].
+
+  port:
+    $ref: /schemas/graph.yaml#/$defs/port-base
+    additionalProperties: false
+    description:
+      1-lane MIPI CSI-2 D-PHY output port (MDP0/MDN0, MCP/MCN)[cite: 1].
+
+    properties:
+      endpoint:
+        $ref: /schemas/media/video-interfaces.yaml#
+        unevaluatedProperties: false
+
+        properties:
+          data-lanes:
+            items:
+              - const: 1
+
+          link-frequencies:
+            items:
+              - const: 180000000 # 360 Mbps DDR typical MIPI link rate[cite: 1]
+
+        required:
+          - data-lanes
+          - link-frequencies
+
+required:
+  - compatible
+  - reg
+  - clocks
+  - clock-names
+  - avdd-supply
+  - dovdd-supply
+  - dvdd-supply
+  - port
+
+unevaluatedProperties: false
+
+examples:
+  - |
+    #include <dt-bindings/gpio/gpio.h>
+    #include <dt-bindings/media/video-interfaces.h>
+
+    i2c {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        camera-sensor@36 {
+            compatible = "omnivision,ov9234";
+            reg = <0x36>;
+
+            clocks = <&cam_xvclk>;
+            clock-names = "xvclk";
+            assigned-clocks = <&cam_xvclk>;
+            assigned-clock-rates = <24000000>;
+
+            avdd-supply = <&vreg_cam_avdd_2v8>;
+            dovdd-supply = <&vreg_cam_dovdd_1v8>;
+            dvdd-supply = <&vreg_cam_dvdd_1v2>;
+
+            reset-gpios = <&gpio1 12 GPIO_ACTIVE_LOW>;
+            orientation = <0>;
+            rotation = <0>;
+
+            port {
+                ov9234_ep: endpoint {
+                    remote-endpoint = <&csi2_rx0_ep>;
+                    data-lanes = <1>;
+                    link-frequencies = /bits/ 64 <180000000>;
+                };
+            };
+        };
+    };
+...
